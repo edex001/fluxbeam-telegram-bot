@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 
 import base58
-from bip_utils import Bip39MnemonicGenerator, Bip39SeedGenerator, Bip44, Bip44Coins, Bip44Changes
+from bip_utils import Bip39MnemonicGenerator, Bip39SeedGenerator, Bip39WordsNum, Bip44, Bip44Coins, Bip44Changes
 from cryptography.fernet import Fernet, InvalidToken
 from solders.keypair import Keypair
 
@@ -23,8 +23,6 @@ def _fernet() -> Fernet:
 
 
 def init_db() -> None:
-    # Fail fast at startup instead of discovering a missing/invalid encryption key
-    # only when a user tries to create/import a wallet.
     _fernet()
     with sqlite3.connect(DB_PATH) as db:
         db.execute(
@@ -52,17 +50,24 @@ def _keypair_from_seed_phrase(mnemonic: str) -> Keypair:
         raise ValueError("Seed phrase must contain 12, 15, 18, 21, or 24 words")
 
     seed = Bip39SeedGenerator(words).Generate()
-    ctx = Bip44.FromSeed(seed, Bip44Coins.SOLANA).DeriveDefaultPath()
+    ctx = (
+        Bip44.FromSeed(seed, Bip44Coins.SOLANA)
+        .Purpose()
+        .Coin()
+        .Account(0)
+        .Change(Bip44Changes.CHAIN_EXT)
+        .AddressIndex(0)
+    )
     return Keypair.from_seed(ctx.PrivateKey().Raw().ToBytes())
 
 
 def create_wallet(user_id: int) -> tuple[str, str]:
     """Create a BIP39 12-word Solana wallet and return (address, mnemonic).
 
-    The mnemonic is returned only to the caller so the Telegram handler can show it
-    once. It is never persisted; only the encrypted 32-byte signing seed is stored.
+    The mnemonic is returned only to the Telegram handler so it can be shown once.
+    It is never persisted; only the encrypted signing key is stored.
     """
-    mnemonic = Bip39MnemonicGenerator().FromWordsNumber(12).ToStr()
+    mnemonic = Bip39MnemonicGenerator().FromWordsNumber(Bip39WordsNum.WORDS_NUM_12).ToStr()
     kp = _keypair_from_seed_phrase(mnemonic)
     return _store(user_id, kp), mnemonic
 
