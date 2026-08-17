@@ -1,0 +1,20 @@
+services:
+  - type: worker
+    name: fluxbeam-telegram-bot
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_ID
+        sync: false
+      - key: SOLANA_RPC_URL
+        value: https://api.mainnet-beta.solana.com
+      - key: JUPITER_BASE_URL
+        value: https://api.jup.ag
+      - key: JUPITER_API_KEY
+        sync: false
+      - key: FLUXBEAM_API_BASE_URL
+        sync: false
+      - key: FLUXBEAM_API_KEY
+        sync: false
