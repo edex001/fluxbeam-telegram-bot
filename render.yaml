@@ -1,19 +1,27 @@
 services:
   - type: worker
     name: fluxbeam-telegram-bot
-    runtime: docker
-    dockerfilePath: ./Dockerfile
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    autoDeploy: true
     envVars:
       - key: BOT_TOKEN
         sync: false
       - key: ADMIN_ID
         sync: false
+      - key: WALLET_ENCRYPTION_KEY
+        sync: false
+      - key: WALLET_DB_PATH
+        value: data/wallets.db
       - key: SOLANA_RPC_URL
-        value: https://api.mainnet-beta.solana.com
+        sync: false
       - key: JUPITER_BASE_URL
         value: https://api.jup.ag
       - key: JUPITER_API_KEY
         sync: false
+      - key: DEFAULT_SLIPPAGE_BPS
+        value: "100"
       - key: FLUXBEAM_API_BASE_URL
         sync: false
       - key: FLUXBEAM_API_KEY
